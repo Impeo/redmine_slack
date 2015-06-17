@@ -53,6 +53,24 @@ class SlackListener < Redmine::Hook::Listener
 
 		speak msg, channel, attachment, url
 	end
+	
+	def controller_issues_bulk_edit_before_save(context={})
+		issue = context[:issue]
+		params = context[:params]
+
+		channel = channel_for_project issue.project
+		url = url_for_project issue.project
+
+		return unless channel and url and Setting.plugin_redmine_slack[:post_updates] == '1'
+
+		msg = "[#{escape issue.project}] <#{object_url issue}|#{escape issue}> is updated"
+
+		attachment = {}
+		attachment[:note] = params[:notes]
+	
+
+		speak msg, channel, attachment, url
+	end
 
 	def speak(msg, channel, attachment=nil, url=nil)
 		url = Setting.plugin_redmine_slack[:slack_url] if not url
