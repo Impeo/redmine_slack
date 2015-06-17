@@ -56,7 +56,7 @@ class SlackListener < Redmine::Hook::Listener
 	
 	def controller_issues_bulk_edit_before_save(context={})
 		issue = context[:issue]
-		params = context[:params]
+		journal = issue.current_journal
 
 		channel = channel_for_project issue.project
 		url = url_for_project issue.project
@@ -66,7 +66,8 @@ class SlackListener < Redmine::Hook::Listener
 		msg = "[#{escape issue.project}] <#{object_url issue}|#{escape issue}> is updated"
 
 		attachment = {}
-		attachment[:note] = params[:notes]
+		attachment[:text] = escape journal.notes if journal.notes
+		attachment[:fields] = journal.details.map { |d| detail_to_field d }
 	
 
 		speak msg, channel, attachment, url
