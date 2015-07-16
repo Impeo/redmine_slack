@@ -88,7 +88,7 @@ class SlackListener < Redmine::Hook::Listener
 	def speak_inc_global(msg, channel, attachment=nil, url=nil)
 		speak msg, channel, attachment, url
 
-		global_channels.each { |global_channel|
+		global_channels().each { |global_channel|
 			speak msg, global_channel, attachment, url
 		}
 	end
