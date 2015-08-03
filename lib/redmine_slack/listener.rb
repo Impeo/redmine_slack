@@ -5,7 +5,10 @@ class SlackListener < Redmine::Hook::Listener
 		issue = context[:issue]
 
 		channel = channel_for_project issue.project
+        channel = "#redmine" unless channel
 		url = url_for_project issue.project
+
+        Rails.logger.info "Slack! #{channel} @ #{url}"
 
 		return unless channel and url
 
@@ -41,7 +44,10 @@ class SlackListener < Redmine::Hook::Listener
 		journal = context[:journal]
 
 		channel = channel_for_project issue.project
+        channel = "#redmine" unless channel
 		url = url_for_project issue.project
+
+        Rails.logger.info "Slack? (#{issue.project}) #{channel} @ #{url}"
 
 		return unless channel and url and Setting.plugin_redmine_slack[:post_updates] == '1'
 
@@ -112,10 +118,18 @@ class SlackListener < Redmine::Hook::Listener
 			end
 		end
 
+        Rails.logger.info "Sending Slack notification: #{url} #{channel}"
+
 		client = HTTPClient.new
 		client.ssl_config.cert_store.set_default_paths
 		client.ssl_config.ssl_version = "SSLv23"
-		client.post url, {:payload => params.to_json}
+
+
+        Thread.new() {
+            res = client.post url, {:payload => params.to_json}
+
+            Rails.logger.info "Slack notification: #{res.status}, got: #{res.body} sent: #{params}"
+        }
 	end
 
 private
