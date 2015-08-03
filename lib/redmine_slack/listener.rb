@@ -53,6 +53,10 @@ class SlackListener < Redmine::Hook::Listener
 
 		speak msg, channel, attachment, url
 	end
+	
+	def controller_issues_bulk_edit_before_save(context={})
+		controller_issues_edit_after_save context
+	end
 
 	def model_changeset_scan_commit_for_issue_ids_pre_issue_update(context={})
 		issue = context[:issue]
