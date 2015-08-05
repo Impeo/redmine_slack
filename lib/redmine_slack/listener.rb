@@ -87,13 +87,13 @@ class SlackListener < Redmine::Hook::Listener
 
 	def controller_wiki_edit_after_save(context = {})
 
+		project = context[:project]
+		page = context[:page]
+
 		channel = channel_for_project project
 		url = url_for_project project
 
 		return unless channel and url and Setting.plugin_redmine_slack[:post_wiki_updates] == '1'
-
-		project = context[:project]
-		page = context[:page]
 
 		user = page.content.author
 		project_url = "<#{object_url project}|#{escape project}>"
