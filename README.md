@@ -24,6 +24,8 @@ Restart Redmine, and you should see the plugin show up in the Plugins page.
 Under the configuration options, set the Slack API URL to the URL for an
 Incoming WebHook integration in your Slack account.
 
+Kind of important: Channel name must start with hashmark (#), default is #redmine.
+
 ## Customized Routing
 
 You can also route messages to different channels on a per-project basis. To

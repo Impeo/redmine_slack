@@ -42,6 +42,10 @@
 </p>
 
 <p>
+<<<<<<< HEAD
+	<label for="settings_post_wiki_updates">Post Wiki Updates?</label>
+=======
 	<label for="settings_post_wiki_updates">Not Post Wiki Updates?</label>
+>>>>>>> 3476359ca7a9475e97c840c95f8453df2c98a054
 	<input type="checkbox" id="settings_post_wiki_updates" value="1" name="settings[post_wiki_updates]" <%= settings['post_wiki_updates'] == '1' ? 'checked="checked"' : '' %> />
 </p>
