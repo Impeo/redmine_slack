@@ -8,6 +8,12 @@
 	<a href="/custom_fields/new?type=ProjectCustomField">project custom field</a> named "Slack URL" (without quotes).
 </p>
 
+
+<p>
+	<label for="settings_global_channels">Global Slack Channels (comma-separated)</label>
+	<input type="text" id="settings_global_channels" value="<%= settings['global_channels'] %>" name="settings[global_channels]" />
+</p>
+
 <p>
 	<label for="settings_channel">Slack Channel</label>
 	<input type="text" id="settings_channel" value="<%= settings['channel'] %>" name="settings[channel]" />
@@ -39,9 +45,4 @@
 <p>
 	<label for="settings_post_updates">Post Issue Updates?</label>
 	<input type="checkbox" id="settings_post_updates" value="1" name="settings[post_updates]" <%= settings['post_updates'] == '1' ? 'checked="checked"' : '' %> />
-</p>
-
-<p>
-	<label for="settings_post_wiki_updates">Not Post Wiki Updates?</label>
-	<input type="checkbox" id="settings_post_wiki_updates" value="1" name="settings[post_wiki_updates]" <%= settings['post_wiki_updates'] == '1' ? 'checked="checked"' : '' %> />
 </p>

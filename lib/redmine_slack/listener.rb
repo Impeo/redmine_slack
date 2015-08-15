@@ -7,6 +7,7 @@ class SlackListener < Redmine::Hook::Listener
 		channel = channel_for_project issue.project
         channel = "#redmine" unless channel
 		url = url_for_project issue.project
+		username = username_for_user issue.assigned_to
 
         Rails.logger.info "Slack! #{channel} @ #{url}"
 
@@ -36,7 +37,7 @@ class SlackListener < Redmine::Hook::Listener
 			:short => true
 		} if Setting.plugin_redmine_slack[:display_watchers] == 'yes'
 
-		speak msg, channel, attachment, url
+		speak_inc_global msg, channel, attachment, url, username
 	end
 
 	def controller_issues_edit_after_save(context={})
@@ -46,6 +47,7 @@ class SlackListener < Redmine::Hook::Listener
 		channel = channel_for_project issue.project
         channel = "#redmine" unless channel
 		url = url_for_project issue.project
+		username = username_for_user issue.assigned_to
 
         Rails.logger.info "Slack? (#{issue.project}) #{channel} @ #{url}"
 
@@ -57,7 +59,7 @@ class SlackListener < Redmine::Hook::Listener
 		attachment[:text] = escape journal.notes if journal.notes
 		attachment[:fields] = journal.details.map { |d| detail_to_field d }
 
-		speak msg, channel, attachment, url
+		speak_inc_global msg, channel, attachment, url, username
 	end
 	
 	def controller_issues_bulk_edit_before_save(context={})
@@ -71,6 +73,7 @@ class SlackListener < Redmine::Hook::Listener
 
 		channel = channel_for_project issue.project
 		url = url_for_project issue.project
+		username = username_for_user issue.assigned_to
 
 		return unless channel and url and issue.save
 
@@ -92,7 +95,19 @@ class SlackListener < Redmine::Hook::Listener
 		attachment[:text] = ll(Setting.default_language, :text_status_changed_by_changeset, "<#{revision_url}|#{escape changeset.comments}>")
 		attachment[:fields] = journal.details.map { |d| detail_to_field d }
 
+		speak_inc_global msg, channel, attachment, url, username
+	end
+
+	def speak_inc_global(msg, channel, attachment=nil, url=nil, user=nil)
 		speak msg, channel, attachment, url
+
+		global_channels().each { |global_channel|
+			speak msg, global_channel, attachment, url
+		}
+
+		if user
+			speak msg, user, attachment, url
+		end
 	end
 
 	def controller_wiki_edit_after_save(context = { })
@@ -187,6 +202,28 @@ private
 		else
 			nil
 		end
+	end
+
+	def username_for_user(user)
+		return nil if user.blank?
+
+		cf = UserCustomField.find_by_name("Slack Username")
+
+		val = [
+			(user.custom_value_for(cf).value rescue nil)
+		].find{|v| v.present?}
+
+		if val.to_s.starts_with? '@'
+			val
+		else
+			nil
+		end
+	end
+
+	def global_channels
+		Setting.plugin_redmine_slack[:global_channels].split(",").map { |chn|
+			chn.strip
+		}
 	end
 
 	def detail_to_field(detail)
