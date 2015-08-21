@@ -115,6 +115,11 @@ class SlackListener < Redmine::Hook::Listener
 		project = context[:project]
 		page = context[:page]
 
+		channel = channel_for_project project
+		url = url_for_project project
+
+		return unless channel and url and has_additional_hook_for_project(project, "Wiki update")
+
 		user = page.content.author
 		project_url = "<#{object_url project}|#{escape project}>"	
 		page_url = "<#{object_url page}|#{page.title}>"
@@ -125,9 +130,48 @@ class SlackListener < Redmine::Hook::Listener
 
 		attachment = {}
 		attachment[:text] = "Update Page : #{page_url} \n comment : #{page.content.comments}"
-		speak comment, channel, attachment, url
+
+		speak msg, channel, attachment, url
 	end
-	
+
+	def controller_stories_new_after_save(context={})
+		project = context[:project]
+		if has_additional_hook_for_project(project, "Story create") then
+			params = context[:params]
+			story = context[:story]
+			issue = Issue.find_by_id(story.id)
+			issue.description = ""
+			controller_issues_new_after_save({ :params => params, :issue => issue})
+		end
+	end
+
+	def controller_stories_edit_after_save(context={})
+		project = context[:project]
+		if has_additional_hook_for_project(project, "Story update") then
+			params = context[:params]
+			issue = Issue.find_by_id(params[:id])
+			journal = Journal.find_by_journalized_id(params[:id])
+			controller_issues_edit_after_save({ :params => params, :issue => issue, :journal => journal})
+		end
+	end
+
+	def controller_tasks_new_after_save(context={})
+		project = context[:project]
+		if has_additional_hook_for_project(project, "Task create") then
+			controller_issues_new_after_save(context)
+		end
+	end
+
+	def controller_tasks_edit_after_save(context={})
+		project = context[:project]
+		if has_additional_hook_for_project(project, "Task update") then
+			params = context[:params]
+			issue = Issue.find_by_id(params[:id])
+			journal = Journal.find_by_journalized_id(params[:id])
+			controller_issues_edit_after_save({ :params => params, :issue => issue, :journal => journal})
+		end
+	end
+
 	def speak(msg, channel, attachment=nil, url=nil)
 		url = Setting.plugin_redmine_slack[:slack_url] if not url
 		username = Setting.plugin_redmine_slack[:username]
@@ -204,7 +248,19 @@ private
 		end
 	end
 
-	def username_for_user(user)
+	def has_additional_hook_for_project(proj, custom_value)
+		return has_custom_value_for_project(proj, "Additional call hook", custom_value)
+	end
+
+	def has_custom_value_for_project(proj, field_name, custom_value)
+		return false if proj.blank?
+
+		cf = ProjectCustomField.find_by_name(field_name)
+		cv = proj.custom_values.detect { |v| v.custom_field_id == cf.id and v.value == custom_value }
+		return cv != nil
+	end
+
+def username_for_user(user)
 		return nil if user.blank?
 
 		cf = UserCustomField.find_by_name("Slack Username")
@@ -225,6 +281,7 @@ private
 			chn.strip
 		}
 	end
+
 
 	def detail_to_field(detail)
 		if detail.property == "cf"
