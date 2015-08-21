@@ -277,9 +277,15 @@ def username_for_user(user)
 	end
 
 	def global_channels
-		Setting.plugin_redmine_slack[:global_channels].split(",").map { |chn|
-			chn.strip
-		}
+		gcs = Setting.plugin_redmine_slack[:global_channels]
+
+		if gcs.is_a? String
+			gcs.split(",").map { |chn|
+				chn.strip
+			}
+		else
+			[]
+		end
 	end
 
 
